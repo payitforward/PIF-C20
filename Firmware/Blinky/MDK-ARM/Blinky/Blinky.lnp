@@ -1,0 +1,23 @@
+--cpu Cortex-M3
+"blinky\startup_stm32f103xb.o"
+"blinky\main.o"
+"blinky\stm32f1xx_it.o"
+"blinky\stm32f1xx_hal_msp.o"
+"blinky\stm32f1xx_hal_gpio_ex.o"
+"blinky\stm32f1xx_hal_tim.o"
+"blinky\stm32f1xx_hal_tim_ex.o"
+"blinky\stm32f1xx_hal.o"
+"blinky\stm32f1xx_hal_rcc.o"
+"blinky\stm32f1xx_hal_rcc_ex.o"
+"blinky\stm32f1xx_hal_gpio.o"
+"blinky\stm32f1xx_hal_dma.o"
+"blinky\stm32f1xx_hal_cortex.o"
+"blinky\stm32f1xx_hal_pwr.o"
+"blinky\stm32f1xx_hal_flash.o"
+"blinky\stm32f1xx_hal_flash_ex.o"
+"blinky\stm32f1xx_hal_exti.o"
+"blinky\system_stm32f1xx.o"
+--library_type=microlib --strict --scatter "Blinky\Blinky.sct"
+--summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list "Blinky.map" -o Blinky\Blinky.axf

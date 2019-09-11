@@ -405,6 +405,7 @@ local.properties
 # Scala IDE specific (Scala & Java development for Eclipse)
 .cache-main
 .scala_dependencies
+<<<<<<< Updated upstream
 .worksheet
 
 # Various Altium files
@@ -438,3 +439,6 @@ scripts/__pycache__/
 *.bak
 *.dwl
 *.dwl2
+=======
+.worksheet
+>>>>>>> Stashed changes
