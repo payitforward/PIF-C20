@@ -1,7 +1,7 @@
 [PreviousGenFiles]
-HeaderPath=E:/Projects/PIF-C20/Firmware/ButtonPolling/Inc
+HeaderPath=D:/Works/git/PIF-C20/Firmware/ButtonPolling/Inc
 HeaderFiles=stm32f1xx_it.h;stm32f1xx_hal_conf.h;main.h;
-SourcePath=E:/Projects/PIF-C20/Firmware/ButtonPolling/Src
+SourcePath=D:/Works/git/PIF-C20/Firmware/ButtonPolling/Src
 SourceFiles=stm32f1xx_it.c;stm32f1xx_hal_msp.c;main.c;
 
 [PreviousLibFiles]
