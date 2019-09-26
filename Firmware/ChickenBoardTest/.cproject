@@ -28,7 +28,11 @@
 							<option id="fr.ac6.managedbuild.option.gnu.cross.fpu.2127288026" name="Floating point hardware" superClass="fr.ac6.managedbuild.option.gnu.cross.fpu" value="fr.ac6.managedbuild.option.gnu.cross.fpu.no" valueType="enumerated"/>
 							<option id="fr.ac6.managedbuild.option.gnu.cross.floatabi.1060428520" name="Floating-point ABI" superClass="fr.ac6.managedbuild.option.gnu.cross.floatabi" value="fr.ac6.managedbuild.option.gnu.cross.floatabi.soft" valueType="enumerated"/>
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="fr.ac6.managedbuild.targetPlatform.gnu.cross.1364984101" isAbstract="false" osList="all" superClass="fr.ac6.managedbuild.targetPlatform.gnu.cross"/>
+<<<<<<< HEAD
 							<builder buildPath="${workspace_loc:/ChickenBoardTest}/Debug" id="fr.ac6.managedbuild.builder.gnu.cross.1547530452" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="unlimited" superClass="fr.ac6.managedbuild.builder.gnu.cross">
+=======
+							<builder buildPath="${workspace_loc:/ChickenBoardTest}/Debug" id="fr.ac6.managedbuild.builder.gnu.cross.1547530452" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="4" superClass="fr.ac6.managedbuild.builder.gnu.cross">
+>>>>>>> master
 								<outputEntries>
 									<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name="Debug"/>
 								</outputEntries>
@@ -242,5 +246,8 @@
 		<configuration configurationName="Release"/>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+<<<<<<< HEAD
 	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
+=======
+>>>>>>> master
 </cproject>
