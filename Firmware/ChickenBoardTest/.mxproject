@@ -1,7 +1,7 @@
 [PreviousGenFiles]
-HeaderPath=E:/Projects/PIF-C20/Firmware/ChickenBoardTest/Inc
+HeaderPath=C:/GIT/PIF-C20/Firmware/ChickenBoardTest/Inc
 HeaderFiles=gpio.h;adc.h;i2c.h;spi.h;tim.h;usart.h;stm32f1xx_it.h;stm32f1xx_hal_conf.h;main.h;
-SourcePath=E:/Projects/PIF-C20/Firmware/ChickenBoardTest/Src
+SourcePath=C:/GIT/PIF-C20/Firmware/ChickenBoardTest/Src
 SourceFiles=gpio.c;adc.c;i2c.c;spi.c;tim.c;usart.c;stm32f1xx_it.c;stm32f1xx_hal_msp.c;main.c;
 
 [PreviousLibFiles]
