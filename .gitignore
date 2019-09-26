@@ -490,5 +490,6 @@ Temporary Items
 
 *.bin
 *.elf
-
+*.cproject
+*.project
 *.o
