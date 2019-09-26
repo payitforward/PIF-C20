@@ -490,5 +490,5 @@ Temporary Items
 
 *.bin
 *.elf
-*.ld
+
 *.o
