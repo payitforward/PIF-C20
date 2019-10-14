@@ -20,7 +20,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
+#include "stdbool.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -58,7 +58,8 @@ static void MX_USART1_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+uint8_t data;
+bool isDataReceived = false;
 /* USER CODE END 0 */
 
 /**
@@ -92,15 +93,19 @@ int main(void)
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  uint8_t data;
+
+  HAL_UART_Receive_IT(&huart1, &data, 1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  HAL_UART_Receive(&huart1, &data, 1, HAL_MAX_DELAY);
-	  HAL_UART_Transmit(&huart1, &data, 1, HAL_MAX_DELAY);
+	  if(isDataReceived){
+		  isDataReceived = false;
+		  HAL_UART_Receive_IT(&huart1, &data, 1);
+		  HAL_UART_Transmit(&huart1, &data, 1, HAL_MAX_DELAY);
+	  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -189,7 +194,11 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
+	if(huart->Instance == huart1.Instance){
+		isDataReceived = true;
+	}
+}
 /* USER CODE END 4 */
 
 /**
