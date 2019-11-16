@@ -1,0 +1,26 @@
+--cpu Cortex-M3
+"xedoline\startup_stm32f103xb.o"
+"xedoline\pid.o"
+"xedoline\sensor.o"
+"xedoline\uart.o"
+"xedoline\main.o"
+"xedoline\stm32f1xx_it.o"
+"xedoline\stm32f1xx_hal_msp.o"
+"xedoline\stm32f1xx_hal_gpio_ex.o"
+"xedoline\stm32f1xx_hal_tim.o"
+"xedoline\stm32f1xx_hal_tim_ex.o"
+"xedoline\stm32f1xx_hal_uart.o"
+"xedoline\stm32f1xx_hal.o"
+"xedoline\stm32f1xx_hal_rcc.o"
+"xedoline\stm32f1xx_hal_rcc_ex.o"
+"xedoline\stm32f1xx_hal_gpio.o"
+"xedoline\stm32f1xx_hal_dma.o"
+"xedoline\stm32f1xx_hal_cortex.o"
+"xedoline\stm32f1xx_hal_pwr.o"
+"xedoline\stm32f1xx_hal_flash.o"
+"xedoline\stm32f1xx_hal_flash_ex.o"
+"xedoline\system_stm32f1xx.o"
+--library_type=microlib --strict --scatter "XEDOLINE\XEDOLINE.sct"
+--summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list "XEDOLINE.map" -o XEDOLINE\XEDOLINE.axf
