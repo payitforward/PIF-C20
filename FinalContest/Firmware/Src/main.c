@@ -75,13 +75,12 @@ PID_parameter PID_set_parameters = {.Kp = 25,.Ki=0.06,.Kd=3,.Ts = 0.02,.PID_Satu
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
-void control();
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_DMA_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_TIM4_Init(void);
 static void MX_TIM3_Init(void);
+static void MX_DMA_Init(void);
 /* USER CODE BEGIN PFP */
 /*
 PB0  ---> IN4
@@ -310,10 +309,10 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_DMA_Init();
   MX_USART1_UART_Init();
   MX_TIM4_Init();
   MX_TIM3_Init();
+  MX_DMA_Init();
   /* USER CODE BEGIN 2 */
 	HAL_UART_Receive_DMA(&huart1,(uint8_t*)Rx_buff,3);
 	HAL_TIM_PWM_Start(&htim4,TIM_CHANNEL_3);
@@ -522,6 +521,7 @@ static void MX_USART1_UART_Init(void)
   */
 static void MX_DMA_Init(void) 
 {
+
   /* DMA controller clock enable */
   __HAL_RCC_DMA1_CLK_ENABLE();
 
