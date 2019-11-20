@@ -219,9 +219,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 					i++;
 					my_state = UART_APP;
 					HAL_UART_Receive_DMA(&huart1,Rx_buff,3);
-				//	break;
+				break;
 				}
-				else if (Rx_buff[0] == 'l' && Rx_buff[1] == 'n' && Rx_buff[2] == '1')  // khi nhan nut stop
+				else if (Rx_buff[0] == '1' && Rx_buff[1] == 'n' && Rx_buff[2] == '1')  // khi nhan nut stop
 				{
 					my_state = UART_START;
 					HAL_UART_Receive_DMA(&huart1,Rx_buff,3);
@@ -235,25 +235,26 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 					{
 						control();
 						kt++;
-						my_state = UART_START;
+						my_state = UART_APP;
 						HAL_UART_Receive_DMA(&huart1,Rx_buff,3);
-				//		break;
+						break;
 					}
 			if (Rx_buff[0] == '1' && Rx_buff[1] == 'n' && Rx_buff[2] == '1') // bat che do do line
 					{
 						mode = 1;  // che do do line
-					HAL_UART_Receive_DMA(&huart1,Rx_buff,3);
-						my_state = UART_START;
-//						break;
+						HAL_UART_Receive_DMA(&huart1,Rx_buff,3);
+						my_state = UART_APP;
+					break;
 					}
-			else if(Rx_buff[0] == '1' && Rx_buff[1] == 'n' && Rx_buff[2] == '0') // tat che do do line
+			if(Rx_buff[0] == '1' && Rx_buff[1] == 'n' && Rx_buff[2] == '0') // tat che do do line
 					{	
 					mode =0;
-					my_state = UART_START;
 					HAL_UART_Receive_DMA(&huart1,Rx_buff,3);
+					my_state = UART_START;
+					break;
 					}	
 					k++;
-					break;
+				//	break;
 					}
 			HAL_UART_Receive_DMA(&huart1,Rx_buff,3);	
 			}
@@ -328,7 +329,6 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_USART1_UART_Init();
   MX_TIM4_Init();
   MX_TIM3_Init();
   MX_DMA_Init();
