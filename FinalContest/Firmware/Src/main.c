@@ -30,7 +30,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-uint8_t kt=0;
+int kt=0;
 float vitri;
 int i_SumIndexArry=0;
 int i_SumValuteIndexArry=0;
@@ -66,8 +66,8 @@ uint8_t pwm1 = 160;
 uint8_t pwm2 = 160;
 uint8_t offset = 10;
 uint8_t mode = 0;    // 0 : control   , 1: line follow
-	int i =0;
-	int k =0;
+int i =0;
+int k =0;
 uint8_t S[4];
 float result_PWM;
 PID_parameter PID_set_parameters = {.Kp = 25,.Ki=0.06,.Kd=3,.Ts = 0.02,.PID_Saturation = 255
@@ -212,14 +212,14 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 			{	
 			case UART_START:
 			{
-				HAL_UART_Receive_DMA(&huart1,Rx_buff,3);
-
-				if (Rx_buff[0] == 'l' && Rx_buff[1] == 'n' && Rx_buff[2] == '0')  // khi nhan nut start de bat dau
-				{																																// 
+				//HAL_UART_Receive_DMA(&huart1,Rx_buff,3);
+				if (Rx_buff[0] == '1' && Rx_buff[1] == 'n' && Rx_buff[2] == '0')  // khi nhan nut start de bat dau
+				{			
+					// 1n1
 					i++;
 					my_state = UART_APP;
 					HAL_UART_Receive_DMA(&huart1,Rx_buff,3);
-					break;
+				//	break;
 				}
 				else if (Rx_buff[0] == 'l' && Rx_buff[1] == 'n' && Rx_buff[2] == '1')  // khi nhan nut stop
 				{
@@ -231,20 +231,29 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 			case UART_APP:
 			{	
 			HAL_UART_Receive_DMA(&huart1,(uint8_t*)Rx_buff,3);
-			if (Rx_buff[0] == 'l' && Rx_buff[1] != 'n' && Rx_buff[2] == '0')  // khi o che do dieu khien tay
+			if (Rx_buff[0] == '1' && Rx_buff[1] != 'n' && Rx_buff[2] == '0')  // khi o che do dieu khien tay
 					{
 						control();
 						kt++;
+						my_state = UART_START;
 						HAL_UART_Receive_DMA(&huart1,Rx_buff,3);
+				//		break;
 					}
-			if (Rx_buff[0] == 'l' && Rx_buff[1] == 'n' && Rx_buff[2] == 'l') // che do do line
+			if (Rx_buff[0] == '1' && Rx_buff[1] == 'n' && Rx_buff[2] == '1') // bat che do do line
 					{
 						mode = 1;  // che do do line
-						HAL_UART_Receive_DMA(&huart1,Rx_buff,3);
+					HAL_UART_Receive_DMA(&huart1,Rx_buff,3);
+						my_state = UART_START;
+//						break;
 					}
-					k++;
+			else if(Rx_buff[0] == '1' && Rx_buff[1] == 'n' && Rx_buff[2] == '0') // tat che do do line
+					{	
+					mode =0;
 					my_state = UART_START;
-				break;
+					HAL_UART_Receive_DMA(&huart1,Rx_buff,3);
+					}	
+					k++;
+					break;
 					}
 			HAL_UART_Receive_DMA(&huart1,Rx_buff,3);	
 			}
