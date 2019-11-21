@@ -204,61 +204,70 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)   // ngat 20ms
 uint8_t Rx_buff[10];
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {	
-		//HAL_UART_Receive_DMA(&huart1,Rx_buff,3);
-
 	if(huart->Instance == huart1.Instance)
-		{	
-		switch(my_state)
-			{	
-			case UART_START:
+	{	
+	switch(my_state)
+	{	
+		case UART_START:
 			{
-				//HAL_UART_Receive_DMA(&huart1,Rx_buff,3);
-				if (Rx_buff[0] == '1' && Rx_buff[1] == 'n' && Rx_buff[2] == '0')  // khi nhan nut start de bat dau
+			if (Rx_buff[0] == '1' && Rx_buff[1] == 'n' && Rx_buff[2] == '0')  // khi nhan nut start de bat dau
 				{			
-					// 1n1
 					i++;
 					my_state = UART_APP;
 					HAL_UART_Receive_DMA(&huart1,Rx_buff,3);
 				break;
 				}
-				else if (Rx_buff[0] == '1' && Rx_buff[1] == 'n' && Rx_buff[2] == '1')  // khi nhan nut stop
+			else if (Rx_buff[0] == '1' && Rx_buff[1] == 'n' && Rx_buff[2] == '1')  // khi nhan nut stop
 				{
 					my_state = UART_START;
 					HAL_UART_Receive_DMA(&huart1,Rx_buff,3);
 					break;
 				}
+				break;
 			}
-			case UART_APP:
+		case UART_APP:
 			{	
+//			while(sizeof(Rx_buff)!=0)
+//				{
 			HAL_UART_Receive_DMA(&huart1,(uint8_t*)Rx_buff,3);
 			if (Rx_buff[0] == '1' && Rx_buff[1] != 'n' && Rx_buff[2] == '0')  // khi o che do dieu khien tay
-					{
-						control();
-						kt++;
-						my_state = UART_APP;
-						HAL_UART_Receive_DMA(&huart1,Rx_buff,3);
-						break;
-					}
-			if (Rx_buff[0] == '1' && Rx_buff[1] == 'n' && Rx_buff[2] == '1') // bat che do do line
-					{
-						mode = 1;  // che do do line
-						HAL_UART_Receive_DMA(&huart1,Rx_buff,3);
-						my_state = UART_APP;
+				{
+					kt++;
+					control();
+//					if (Rx_buff[1] != 'l' || Rx_buff[1] != 'r' || Rx_buff[1] != 'f' || Rx_buff[1] != 'b')
+//						{
+//								Rx_buff[1] = 'n';
+//								my_state = UART_START;
+//						}
+					my_state = UART_APP;
+				//HAL_UART_Receive_DMA(&huart1,Rx_buff,3);
 					break;
-					}
+				}
+			if (Rx_buff[0] == '1' && Rx_buff[1] == 'n' && Rx_buff[2] == '1') // bat che do do line
+				{
+					mode = 1;  // che do do line
+					HAL_UART_Receive_DMA(&huart1,Rx_buff,3);
+					my_state = UART_APP;
+					break;
+				}
 			if(Rx_buff[0] == '1' && Rx_buff[1] == 'n' && Rx_buff[2] == '0') // tat che do do line
-					{	
+				{	
 					mode =0;
 					HAL_UART_Receive_DMA(&huart1,Rx_buff,3);
-					my_state = UART_START;
+					my_state = UART_APP;
 					break;
-					}	
-					k++;
-				//	break;
-					}
+				}	
+				k++;
+			break;
+				}
+		//	Rx_buff[1] = 'n';
 			HAL_UART_Receive_DMA(&huart1,Rx_buff,3);	
+//			Rx_buff[1] = 'n';
 			}
+//			}
+//			Rx_buff[1] = 'n';
 		}	
+			
 }
 void control()
 	{
@@ -266,34 +275,34 @@ void control()
 		{
 		case 'l':
 		{
-			move(0,0);
-			move(1,1);
+			move(0,1);
+			move(1,0);
 			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,0);   //speed of left motor
-			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,180);	// speed of right motor
+			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,200);	// speed of right motor
 			break;
 		}
 		case 'r':
 		{
-			move(0,0);
-			move(1,1);
-			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,180);   //speed of left motor
+			move(0,1);
+			move(1,0);
+			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,200);   //speed of left motor
 			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,0);	// speed of right motor
 			break;
 		}
 		case 'f':
 		{
-			move(0,0);
-			move(1,1);
-			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,180);   //speed of left motor
-			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,180);	// speed of right motor
+			move(0,1);
+			move(1,0);
+			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,210);   //speed of left motor
+			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,210);	// speed of right motor
 			break;
 		}
 		case 'b':
 		{
-			move(0,1);
-			move(1,0);
-			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,180);   //speed of left motor
-			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,180);	// speed of right motor
+			move(0,0);
+			move(1,1);
+			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,210);   //speed of left motor
+			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,210);	// speed of right motor
 			break;
 		}
 	}
@@ -349,11 +358,12 @@ int main(void)
   while (1)
   {
 		/*	
+		
 						}*/
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	//	HAL_Delay(200);
+	//	control();
   }
 
   /* USER CODE END 3 */
