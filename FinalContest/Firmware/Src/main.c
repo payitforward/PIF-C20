@@ -26,6 +26,7 @@
 #include <PID.h>
 #include "string.h"
 #include "stdio.h"
+#include "stdbool.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -35,6 +36,7 @@ float vitri;
 int i_SumIndexArry=0;
 int i_SumValuteIndexArry=0;
 float f_thamchieu=0;
+bool Datareceive = false;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -61,13 +63,14 @@ UART_HandleTypeDef huart1;
 DMA_HandleTypeDef hdma_usart1_rx;
 
 /* USER CODE BEGIN PV */
-void control();
+
 uint8_t pwm1 = 160;
 uint8_t pwm2 = 160;
 uint8_t offset = 10;
 uint8_t mode = 0;    // 0 : control   , 1: line follow
 int i =0;
 int k =0;
+int kq = 0;
 uint8_t S[4];
 float result_PWM;
 PID_parameter PID_set_parameters = {.Kp = 25,.Ki=0.06,.Kd=3,.Ts = 0.02,.PID_Saturation = 255
@@ -82,6 +85,7 @@ static void MX_TIM4_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_DMA_Init(void);
 /* USER CODE BEGIN PFP */
+void control();
 /*
 PB0  ---> IN4
 PB1  ---> IN3
@@ -206,6 +210,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {	
 	if(huart->Instance == huart1.Instance)
 	{	
+	Datareceive = true;
 	switch(my_state)
 	{	
 		case UART_START:
@@ -223,54 +228,49 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 					HAL_UART_Receive_DMA(&huart1,Rx_buff,3);
 					break;
 				}
-				break;
+			//	break;
 			}
 		case UART_APP:
 			{	
-//			while(sizeof(Rx_buff)!=0)
-//				{
-			HAL_UART_Receive_DMA(&huart1,(uint8_t*)Rx_buff,3);
+		//	HAL_UART_Receive_DMA(&huart1,(uint8_t*)Rx_buff,3);
 			if (Rx_buff[0] == '1' && Rx_buff[1] != 'n' && Rx_buff[2] == '0')  // khi o che do dieu khien tay
 				{
 					kt++;
-					control();
-//					if (Rx_buff[1] != 'l' || Rx_buff[1] != 'r' || Rx_buff[1] != 'f' || Rx_buff[1] != 'b')
-//						{
-//								Rx_buff[1] = 'n';
-//								my_state = UART_START;
-//						}
+					mode = 0;
+					//control();
+					
 					my_state = UART_APP;
-				//HAL_UART_Receive_DMA(&huart1,Rx_buff,3);
-					break;
+					HAL_UART_Receive_DMA(&huart1,Rx_buff,3);
+					
+					//break;
 				}
-			if (Rx_buff[0] == '1' && Rx_buff[1] == 'n' && Rx_buff[2] == '1') // bat che do do line
+			else if (Rx_buff[0] == '1' && Rx_buff[1] == 'n' && Rx_buff[2] == '1') // bat che do do line
 				{
 					mode = 1;  // che do do line
 					HAL_UART_Receive_DMA(&huart1,Rx_buff,3);
 					my_state = UART_APP;
-					break;
+				//	break;
 				}
-			if(Rx_buff[0] == '1' && Rx_buff[1] == 'n' && Rx_buff[2] == '0') // tat che do do line
+			else if(Rx_buff[0] == '1' && Rx_buff[1] == 'n' && Rx_buff[2] == '0') // tat che do do line
 				{	
 					mode =0;
 					HAL_UART_Receive_DMA(&huart1,Rx_buff,3);
 					my_state = UART_APP;
-					break;
+				//	break;
 				}	
 				k++;
+				
 			break;
 				}
-		//	Rx_buff[1] = 'n';
-			HAL_UART_Receive_DMA(&huart1,Rx_buff,3);	
-//			Rx_buff[1] = 'n';
 			}
-//			}
-//			Rx_buff[1] = 'n';
+
 		}	
 			
 }
 void control()
-	{
+{
+		if(mode ==0)
+			{
 		switch(Rx_buff[1])
 		{
 		case 'l':
@@ -279,6 +279,7 @@ void control()
 			move(1,0);
 			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,0);   //speed of left motor
 			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,200);	// speed of right motor
+			kq++;
 			break;
 		}
 		case 'r':
@@ -287,6 +288,7 @@ void control()
 			move(1,0);
 			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,200);   //speed of left motor
 			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,0);	// speed of right motor
+			kq++;
 			break;
 		}
 		case 'f':
@@ -295,6 +297,7 @@ void control()
 			move(1,0);
 			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,210);   //speed of left motor
 			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,210);	// speed of right motor
+			kq++;
 			break;
 		}
 		case 'b':
@@ -303,9 +306,11 @@ void control()
 			move(1,1);
 			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,210);   //speed of left motor
 			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,210);	// speed of right motor
+			kq++;
 			break;
 		}
 	}
+}
 }
 /* USER CODE END 0 */
 
@@ -363,7 +368,14 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	//	control();
+		if (Datareceive)
+			{
+					
+					HAL_UART_Receive_DMA(&huart1,Rx_buff,3);
+					control();
+					Datareceive = false;
+			}
+			
   }
 
   /* USER CODE END 3 */
