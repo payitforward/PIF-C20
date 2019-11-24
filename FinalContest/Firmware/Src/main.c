@@ -24,7 +24,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <PID.h>
-#include "control.h"
+#include <control.h>
 #include "string.h"
 #include "stdio.h"
 
@@ -36,7 +36,9 @@ int kt=0;
 float vitri;
 int i_SumIndexArry=0;
 int i_SumValuteIndexArry=0;
-float f_thamchieu=0;
+float f_thamchieu=0;   
+static int dem=0;
+static float previtri=0;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -75,7 +77,7 @@ int kq = 0;
 uint8_t S[4];
 float result_PWM;
 uint8_t Rx_buff[10];
-PID_parameter PID_set_parameters = {.Kp = 25,.Ki=0.09,.Kd=3,.Ts = 0.005,.PID_Saturation = 255
+PID_parameter PID_set_parameters = {.Kp = 30,.Ki=0.09,.Kd=3,.Ts = 0.005,.PID_Saturation = 255
 																			,.error =0,.pre_error =0,.pre2_error=0,.pre_Out =0,.Out = 0};
 /* USER CODE END PV */
 
@@ -87,8 +89,7 @@ static void MX_TIM4_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_DMA_Init(void);
 /* USER CODE BEGIN PFP */
-void control();
-void move(int motor,int dir);																			
+void control();																	
 /*
 PB0  ---> IN4
 PB1  ---> IN3
@@ -113,7 +114,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)   // ngat 5ms
 				i_SumIndexArry+=(i+1);
 			}
 		}
-		f_thamchieu=(float)i_SumIndexArry/i_SumValuteIndexArry;
 		
 		if(i_SumIndexArry==6)
 		{
@@ -123,7 +123,21 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)   // ngat 5ms
 		{
 			vitri=1.7;
 		}
-		else if(f_thamchieu==2)
+		else if(i_SumIndexArry==10)
+		{
+			dem++;
+			if(dem==5)
+			{
+				vitri=previtri;
+				dem=0;
+			}
+		}
+		else
+	{		
+		f_thamchieu=(float)i_SumIndexArry/i_SumValuteIndexArry;
+		i_SumIndexArry=0;
+		i_SumValuteIndexArry=0;
+		if(f_thamchieu==2)
 		{
 			vitri=-1.2;
 		}
@@ -151,27 +165,24 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)   // ngat 5ms
 		{
 			vitri=1.5;
 		}
-		i_SumIndexArry=0;
-		i_SumValuteIndexArry=0;
+	}
+		previtri=vitri;
 		result_PWM = PID_PROCESS(&PID_set_parameters,vitri,0);
 			if (vitri== 0)
 			{
-				move(0,1);
-				move(1,0);
+				forward();
 				__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,200);
 				__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,200);
 			}
 			if (vitri > 0)
 			{
-				move(0,1);
-				move(1,0);
+				forward();
 				__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,result_PWM);  //kenh 3 dong co trai
 				__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,0);
 			}
 			if (vitri < 0)
 			{
-				move(0,1);
-				move(1,0);
+				forward();
 				__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,0);
 				__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,(result_PWM*-1));
 			}
@@ -181,7 +192,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)   // ngat 5ms
 				control();
 			}
 
-		else if(mode ==3 || mode == 0)
+		else if(mode == 3 || mode == 0)
 			{
 				__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,0);
 				__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,0);
@@ -220,7 +231,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 			HAL_UART_Receive_DMA(&huart1,(uint8_t*)Rx_buff,1);		
 			if (Rx_buff[0] == 'f' || Rx_buff[0] == 'b' || Rx_buff[0] == 'r'||Rx_buff[0] == 'l')  // khi o che do dieu khien tay
 				{
-				kt++;  //debug
 				mode = 2;  // control
 				my_state = UART_APP;
 				HAL_UART_Receive_DMA(&huart1,Rx_buff,1);
@@ -241,54 +251,12 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 					HAL_UART_Receive_DMA(&huart1,Rx_buff,1);
 					my_state = UART_APP;
 				}	
-				k++;
-				break;
+			break;
 				}
 			}
 		}		
 }
-void control()
-{
-		switch(Rx_buff[0])
-		{
-		case 'l':
-		{
-			move(0,1);
-			move(1,0);
-			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,100);   //speed of left motor
-			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,200);	// speed of right motor
-			kq++;
-			break;
-		}
-		case 'r':
-		{
-			move(0,1);
-			move(1,0);
-			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,200);   //speed of left motor
-			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,100);	// speed of right motor
-			kq++;
-			break;
-		}
-		case 'f':
-		{
-			move(0,1);
-			move(1,0);
-			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,210);   //speed of left motor
-			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,210);	// speed of right motor
-			kq++;
-			break;
-		}
-		case 'b':
-		{
-			move(0,0);
-			move(1,1);
-			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,210);   //speed of left motor
-			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,210);	// speed of right motor
-			kq++;
-			break;
-		}
-}
-}
+
 /* USER CODE END 0 */
 
 /**
@@ -344,7 +312,40 @@ int main(void)
   }
   /* USER CODE END 3 */
 }
-
+void control()
+{
+		switch(Rx_buff[0])
+		{
+		case 'l':
+		{
+			forward();
+			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,100);   //speed of left motor
+			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,200);	// speed of right motor
+			break;
+		}
+		case 'r':
+		{
+			forward();
+			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,200);   //speed of left motor
+			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,100);	// speed of right motor
+			break;
+		}
+		case 'f':
+		{
+			forward();
+			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,210);   //speed of left motor
+			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,210);	// speed of right motor
+			break;
+		}
+		case 'b':
+		{	
+			backward();
+			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,210);   //speed of left motor
+			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,210);	// speed of right motor
+			break;
+		}
+}
+}
 /**
   * @brief System Clock Configuration
   * @retval None
@@ -403,7 +404,7 @@ static void MX_TIM3_Init(void)
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 7199;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 49;
+  htim3.Init.Period = 199;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
