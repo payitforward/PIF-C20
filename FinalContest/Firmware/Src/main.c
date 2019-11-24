@@ -114,9 +114,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)   // ngat 20ms
 			}
 		}
 		f_thamchieu=(float)i_SumIndexArry/i_SumValuteIndexArry;
-		i_SumIndexArry=0;
-		i_SumValuteIndexArry=0;
-		if(f_thamchieu==2)
+		
+		if(i_SumIndexArry==6)
+		{
+			vitri=-1.7;
+		}
+		else if(i_SumIndexArry==9)
+		{
+			vitri=1.7;
+		}
+		else if(f_thamchieu==2)
 		{
 			vitri=-1.2;
 		}
@@ -144,6 +151,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)   // ngat 20ms
 		{
 			vitri=1.5;
 		}
+		i_SumIndexArry=0;
+		i_SumValuteIndexArry=0;
 		result_PWM = PID_PROCESS(&PID_set_parameters,vitri,0);
 			if (vitri== 0)
 			{
@@ -171,7 +180,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)   // ngat 20ms
 			{
 				control();
 			}
-		else if(mode ==3)
+		else if(mode ==3 || mode ==0)
 			{
 				__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,0);
 				__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,0);
