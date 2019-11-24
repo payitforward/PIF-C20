@@ -75,7 +75,7 @@ int kq = 0;
 uint8_t S[4];
 float result_PWM;
 uint8_t Rx_buff[10];
-PID_parameter PID_set_parameters = {.Kp = 25,.Ki=0.09,.Kd=3,.Ts = 0.02,.PID_Saturation = 255
+PID_parameter PID_set_parameters = {.Kp = 25,.Ki=0.09,.Kd=3,.Ts = 0.005,.PID_Saturation = 255
 																			,.error =0,.pre_error =0,.pre2_error=0,.pre_Out =0,.Out = 0};
 /* USER CODE END PV */
 
@@ -95,7 +95,7 @@ PB1  ---> IN3
 PB10 ---> IN2
 PB11 ---> IN1
 */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)   // ngat 20ms 
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)   // ngat 5ms 
 	{
 	if (htim->Instance == TIM3)
 	{
@@ -180,7 +180,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)   // ngat 20ms
 			{
 				control();
 			}
-		else if(mode ==3 || mode ==0)
+
+		else if(mode ==3 || mode == 0)
 			{
 				__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,0);
 				__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,0);
@@ -319,6 +320,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  
   MX_TIM4_Init();
   MX_TIM3_Init();
   MX_DMA_Init();
@@ -401,7 +403,7 @@ static void MX_TIM3_Init(void)
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 7199;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 200;
+  htim3.Init.Period = 49;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)

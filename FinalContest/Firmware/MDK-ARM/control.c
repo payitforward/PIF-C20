@@ -1,5 +1,8 @@
 #include "control.h"
-
+/**
+  * @brief function control
+  * @param 
+  */
 void move(int motor,int dir)  
 	{
 	if(motor == 0)    // motor = 0 : dong co phai
