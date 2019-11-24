@@ -36,7 +36,9 @@ int kt=0;
 float vitri;
 int i_SumIndexArry=0;
 int i_SumValuteIndexArry=0;
-float f_thamchieu=0;
+float f_thamchieu=0;   
+static int dem=0;
+static float previtri=0;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -113,7 +115,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)   // ngat 5ms
 				i_SumIndexArry+=(i+1);
 			}
 		}
-		f_thamchieu=(float)i_SumIndexArry/i_SumValuteIndexArry;
 		
 		if(i_SumIndexArry==6)
 		{
@@ -123,7 +124,21 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)   // ngat 5ms
 		{
 			vitri=1.7;
 		}
-		else if(f_thamchieu==2)
+		else if(i_SumIndexArry==10)
+		{
+			dem++;
+			if(dem==5)
+			{
+				vitri=previtri;
+				dem=0;
+			}
+		}
+		else
+	{		
+		f_thamchieu=(float)i_SumIndexArry/i_SumValuteIndexArry;
+		i_SumIndexArry=0;
+		i_SumValuteIndexArry=0;
+		if(f_thamchieu==2)
 		{
 			vitri=-1.2;
 		}
@@ -151,8 +166,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)   // ngat 5ms
 		{
 			vitri=1.5;
 		}
-		i_SumIndexArry=0;
-		i_SumValuteIndexArry=0;
+	}
+		previtri=vitri;
 		result_PWM = PID_PROCESS(&PID_set_parameters,vitri,0);
 			if (vitri== 0)
 			{
@@ -403,7 +418,7 @@ static void MX_TIM3_Init(void)
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 7199;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 49;
+  htim3.Init.Period = 199;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
