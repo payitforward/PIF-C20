@@ -28,17 +28,38 @@
 #include "string.h"
 #include "stdio.h"
 
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 int kt=0;
 float vitri;
+int presumindex=0;
 int i_SumIndexArry=0;
-int i_SumValuteIndexArry=0;
-float f_thamchieu=0;   
-static int dem=0;
+static int demtimeout=1;
+static int demoutline=0;
 static float previtri=0;
+static int demprevitri=0;
+
+typedef enum
+{
+	LINE_OFF=0,
+	LINE_START,
+}LINE_parameter;
+
+typedef enum 
+{
+	LINE_external=0,
+	LINE_internal,
+}LINE_Control;
+
+LINE_parameter Line_status=LINE_START;
+
+void Control_Value_Line(int value);
+void Control_vitri_Line(float vitri);
+void CONTROL();	
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -48,7 +69,6 @@ typedef enum
 			UART_START =0,
 			UART_APP ,
 	}Uart_statemachine;
-
 Uart_statemachine my_state = UART_START;
 /* USER CODE END PD */
 
@@ -60,13 +80,11 @@ Uart_statemachine my_state = UART_START;
 /* Private variables ---------------------------------------------------------*/
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
-
 UART_HandleTypeDef huart1;
 DMA_HandleTypeDef hdma_usart1_rx;
 DMA_HandleTypeDef hdma_usart1_tx;
 
 /* USER CODE BEGIN PV */
-
 uint8_t pwm1 = 160;
 uint8_t pwm2 = 160;
 uint8_t offset = 10;
@@ -77,7 +95,7 @@ int kq = 0;
 uint8_t S[4];
 float result_PWM;
 uint8_t Rx_buff[10];
-PID_parameter PID_set_parameters = {.Kp = 30,.Ki=0.09,.Kd=3,.Ts = 0.005,.PID_Saturation = 255
+PID_parameter PID_set_parameters = {.Kp =40,.Ki=0.0001,.Kd=25,.Ts = 0.005,.PID_Saturation = 180
 																			,.error =0,.pre_error =0,.pre2_error=0,.pre_Out =0,.Out = 0};
 /* USER CODE END PV */
 
@@ -89,116 +107,77 @@ static void MX_TIM4_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_DMA_Init(void);
 /* USER CODE BEGIN PFP */
-void control();																	
+																
 /*
-PB0  ---> IN4
-PB1  ---> IN3
-PB10 ---> IN2
-PB11 ---> IN1
+PB0  ---> IN4 
+PB1  ---> IN3 
+PB10 ---> IN2 
+PB11 ---> IN1 
 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)   // ngat 5ms 
 	{
-	if (htim->Instance == TIM3)
+	if (htim->Instance == htim3.Instance)
 	{
-	if (mode ==1)
+		if (mode ==1)
 		{
-		S[3] = HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_5);
-		S[2] = HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_4);
-		S[1] = HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_3);
-		S[0] = HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_15);
-		for(int i=0;i<=3;i++)
-		{
-			if(S[i]==0)
+			S[3] = HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_5); // dat gia tri = 7
+			S[2] = HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_4); // dat gia tri = 5
+			S[1] = HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_3); // dat gia tri = 3
+			S[0] = HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_15);// dat gia tri = 1
+			for(int i=0;i<=3;i++)
 			{
-				i_SumValuteIndexArry+=1;
-				i_SumIndexArry+=(i+1);
+				if(S[i]==0)
+				{
+					i_SumIndexArry+=(2*i+1);
+				}
 			}
-		}
 		
-		if(i_SumIndexArry==6)
-		{
-			vitri=-1.7;
-		}
-		else if(i_SumIndexArry==9)
-		{
-			vitri=1.7;
-		}
-		else if(i_SumIndexArry==10)
-		{
-			dem++;
-			if(dem==5)
+			if(i_SumIndexArry==0) 
 			{
-				vitri=previtri;
-				dem=0;
+				Line_status = LINE_OFF; // khong bat line
 			}
-		}
-		else
-	{		
-		f_thamchieu=(float)i_SumIndexArry/i_SumValuteIndexArry;
-		i_SumIndexArry=0;
-		i_SumValuteIndexArry=0;
-		if(f_thamchieu==2)
-		{
-			vitri=-1.2;
-		}
-		else if(f_thamchieu==3)
-		{
-			vitri=1.2;
-		}
-		else if(f_thamchieu==1)
-		{
-			vitri=-2;
-		}
-		else if(f_thamchieu==4)
-		{
-			vitri=2;
-		}
-		else if(f_thamchieu==1.5)
-		{
-			vitri=-1.5;
-		}
-		else if(f_thamchieu ==2.5)
-		{
-			vitri=0;
-		}
-		else if(f_thamchieu==3.5)
-		{
-			vitri=1.5;
-		}
-	}
-		previtri=vitri;
-		result_PWM = PID_PROCESS(&PID_set_parameters,vitri,0);
-			if (vitri== 0)
+			else 
+			{		
+				Line_status = LINE_START; // bat duoc line
+			}
+		
+			switch(Line_status)
 			{
-				forward();
-				__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,200);
-				__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,200);
+				case LINE_OFF:      
+				{
+					demoutline+=1;	
+					if(demoutline==20)    // out time line -> nhan lai tri tri truoc khi out
+					{
+							demtimeout+=1;
+							vitri=previtri;
+							Control_vitri_Line(vitri);
+							Line_status = LINE_START;
+							demoutline=0;
+					}
+					
+					break;
+				}
+				case LINE_START:
+				{
+					Control_Value_Line(i_SumIndexArry);
+					break;
+				}
 			}
-			if (vitri > 0)
-			{
-				forward();
-				__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,result_PWM);  //kenh 3 dong co trai
-				__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,0);
-			}
-			if (vitri < 0)
-			{
-				forward();
-				__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,0);
-				__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,(result_PWM*-1));
-			}
-			}
+			presumindex=i_SumIndexArry;
+			i_SumIndexArry=0;
+			
+		}
 		else if(mode ==2)
-			{
-				control();
-			}
-
+		{
+			CONTROL();
+		}
 		else if(mode == 3 || mode == 0)
-			{
-				__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,0);
-				__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,0);
-			}
+		{
+			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,0);
+			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,0);
 		}
 	}
+}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -235,11 +214,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 				my_state = UART_APP;
 				HAL_UART_Receive_DMA(&huart1,Rx_buff,1);
 				}
-			else if (Rx_buff[0] =='i')
+				else if (Rx_buff[0] =='i')
 				{
 					mode = 3;
 				}
-			else if (Rx_buff[0] == 'd' ) // bat che do do line
+				else if (Rx_buff[0] == 'd' ) // bat che do do line
 				{
 					mode = 1;  // che do do line
 					HAL_UART_Receive_DMA(&huart1,Rx_buff,1);
@@ -312,122 +291,128 @@ int main(void)
   }
   /* USER CODE END 3 */
 }
-void control()
+/*-----------------------------------------------------------------------------
+@brief  Control_Value_Line
+@param 	
+light :         0    1    2    3
+Reference:      1    3    5    7
+*/
+void Control_Value_Line (int value)
+{
+	switch(value)
+		{
+		case 7:        
+		{
+			vitri=1.8;
+			break;
+		}
+		case (12 | 15):
+			vitri=1.65;
+			break;
+		case 5:
+			vitri=1.4;
+			break;
+		case 3:
+			vitri=-1.4;
+			break;
+		case 8:
+			vitri=0;
+			break; 
+		case 0:
+			vitri =0;
+			break;
+		case (4 | 9):
+			vitri= -1.65;
+			break;
+		case 1:
+			vitri=-1.8;
+			break;
+		}
+		Control_vitri_Line(vitri);
+}
+/*-----------------------------------------------------------------------------
+@brief  Control robot f
+@param 	None
+*/
+void CONTROL()
 {
 		switch(Rx_buff[0])
 		{
-		case 'l':
+		case 'r':
 		{
-			forward();
+			backward();
 			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,100);   //speed of left motor
 			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,200);	// speed of right motor
 			break;
 		}
-		case 'r':
+		case 'l':
 		{
-			forward();
+			backward();
 			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,200);   //speed of left motor
 			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,100);	// speed of right motor
 			break;
 		}
 		case 'f':
 		{
-			forward();
+			backward();
 			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,210);   //speed of left motor
 			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,210);	// speed of right motor
 			break;
 		}
 		case 'b':
 		{	
-			backward();
+			forward();
 			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,210);   //speed of left motor
 			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,210);	// speed of right motor
 			break;
 		}
 }
 }
-/**
-  * @brief System Clock Configuration
-  * @retval None
-  */
-void SystemClock_Config(void)
+void Control_vitri_Line (float vitri)
 {
-  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-
-  /** Initializes the CPU, AHB and APB busses clocks 
-  */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-  RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /** Initializes the CPU, AHB and APB busses clocks 
-  */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
-
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
-  {
-    Error_Handler();
-  }
+	previtri=vitri;	
+	result_PWM = PID_PROCESS(&PID_set_parameters,vitri,0);
+	if (vitri== 0)
+	{
+		backward();
+		__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,190);  //kenh 3 dong co trai
+		__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,190);
+	}
+	if (vitri < 0)
+	{
+		if(vitri<-1.5)
+		{
+		backward();
+		__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,result_PWM);  //kenh 3 dong co trai
+		HAL_GPIO_WritePin(GPIOB,GPIO_PIN_10,GPIO_PIN_SET); // dong co phai
+		HAL_GPIO_WritePin(GPIOB,GPIO_PIN_11,GPIO_PIN_RESET);
+		__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,150);
+		}
+		else
+		{
+			backward();
+			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,result_PWM);  //kenh 3 dong co trai
+			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,0);
+		}
+	}
+	if (vitri > 0)
+	{
+		if(vitri>1.5)
+		{
+		backward();
+		__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,(result_PWM*-1));
+		HAL_GPIO_WritePin(GPIOB,GPIO_PIN_1,GPIO_PIN_RESET);  // dong co trai
+		HAL_GPIO_WritePin(GPIOB,GPIO_PIN_0,GPIO_PIN_SET);
+		__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,150);
+		}else
+		{
+			backward();
+			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,(result_PWM*-1));
+			__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,0);
+		}
+	}
+	
 }
-
-/**
-  * @brief TIM3 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_TIM3_Init(void)
-{
-
-  /* USER CODE BEGIN TIM3_Init 0 */
-
-  /* USER CODE END TIM3_Init 0 */
-
-  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
-  TIM_MasterConfigTypeDef sMasterConfig = {0};
-
-  /* USER CODE BEGIN TIM3_Init 1 */
-
-  /* USER CODE END TIM3_Init 1 */
-  htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 7199;
-  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 199;
-  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN TIM3_Init 2 */
-
-  /* USER CODE END TIM3_Init 2 */
-
-}
-
 /**
   * @brief TIM4 Initialization Function
   * @param None
@@ -490,6 +475,89 @@ static void MX_TIM4_Init(void)
   HAL_TIM_MspPostInit(&htim4);
 
 }
+/**
+  * @brief System Clock Configuration
+  * @retval None
+  */
+void SystemClock_Config(void)
+{
+  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+
+  /** Initializes the CPU, AHB and APB busses clocks 
+  */
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Initializes the CPU, AHB and APB busses clocks 
+  */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
+/**
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM3_Init(void)
+{
+
+  /* USER CODE BEGIN TIM3_Init 0 */
+
+  /* USER CODE END TIM3_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM3_Init 1 */
+
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 7199;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 49;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM3_Init 2 */
+
+  /* USER CODE END TIM3_Init 2 */
+
+}
+
+
 
 /**
   * @brief USART1 Initialization Function

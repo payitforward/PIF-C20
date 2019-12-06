@@ -1,5 +1,5 @@
 xedoline\control.o: control.c
-xedoline\control.o: ../Inc/control.h
+xedoline\control.o: control.h
 xedoline\control.o: ../Drivers/CMSIS/Device/ST/STM32F1xx/Include/stm32f1xx.h
 xedoline\control.o: ../Drivers/CMSIS/Device/ST/STM32F1xx/Include/stm32f103xb.h
 xedoline\control.o: ../Drivers/CMSIS/Include/core_cm3.h
