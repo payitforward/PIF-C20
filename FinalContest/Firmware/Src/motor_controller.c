@@ -1,0 +1,60 @@
+#include <motor_controller.h>
+#include <tim.h>
+#include <user_define.h>
+#include <stdlib.h>
+
+void motor_init(void){
+	  HAL_TIM_PWM_Start(&htim4,TIM_CHANNEL_3);
+	  HAL_TIM_PWM_Start(&htim4,TIM_CHANNEL_4);
+}
+
+void motor_set_speed(motor_t motor, int16_t speed){
+	if(speed < -255) speed = -255;
+	if(speed > 255) speed = 255;
+	switch (motor){
+	case MOTOR_0:
+		if(speed > 0){
+#ifdef MOTOR0_REVERT
+			HAL_GPIO_WritePin(MOTOR0_DIR0_PORT,MOTOR0_DIR0_PIN,GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(MOTOR0_DIR1_PORT,MOTOR0_DIR1_PIN,GPIO_PIN_SET);
+#else
+			HAL_GPIO_WritePin(MOTOR0_DIR0_PORT,MOTOR0_DIR0_PIN,GPIO_PIN_SET);
+			HAL_GPIO_WritePin(MOTOR0_DIR1_PORT,MOTOR0_DIR1_PIN,GPIO_PIN_RESET);
+#endif
+		}
+		else{
+#ifdef MOTOR0_REVERT
+			HAL_GPIO_WritePin(MOTOR0_DIR0_PORT,MOTOR0_DIR0_PIN,GPIO_PIN_SET);
+			HAL_GPIO_WritePin(MOTOR0_DIR1_PORT,MOTOR0_DIR1_PIN,GPIO_PIN_RESET);
+#else
+			HAL_GPIO_WritePin(MOTOR0_DIR0_PORT,MOTOR0_DIR0_PIN,GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(MOTOR0_DIR1_PORT,MOTOR0_DIR1_PIN,GPIO_PIN_SET);
+#endif
+		}
+		speed = abs(speed);
+		__HAL_TIM_SET_COMPARE(&MOTOR0_TIMER, MOTOR0_CHANNEL, speed);
+		break;
+	case MOTOR_1:
+		if(speed > 0){
+#ifdef MOTOR1_REVERT
+			HAL_GPIO_WritePin(MOTOR1_DIR0_PORT,MOTOR0_DIR0_PIN,GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(MOTOR1_DIR1_PORT,MOTOR0_DIR1_PIN,GPIO_PIN_SET);
+#else
+			HAL_GPIO_WritePin(MOTOR1_DIR0_PORT,MOTOR0_DIR0_PIN,GPIO_PIN_SET);
+			HAL_GPIO_WritePin(MOTOR1_DIR1_PORT,MOTOR0_DIR1_PIN,GPIO_PIN_RESET);
+#endif
+		}
+		else{
+#ifdef MOTOR1_REVERT
+			HAL_GPIO_WritePin(MOTOR1_DIR0_PORT,MOTOR1_DIR0_PIN,GPIO_PIN_SET);
+			HAL_GPIO_WritePin(MOTOR1_DIR1_PORT,MOTOR1_DIR1_PIN,GPIO_PIN_RESET);
+#else
+			HAL_GPIO_WritePin(MOTOR1_DIR0_PORT,MOTOR1_DIR0_PIN,GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(MOTOR1_DIR1_PORT,MOTOR1_DIR1_PIN,GPIO_PIN_SET);
+#endif
+		}
+		speed = abs(speed);
+		__HAL_TIM_SET_COMPARE(&MOTOR1_TIMER, MOTOR1_CHANNEL, speed);
+		break;
+	}
+}
